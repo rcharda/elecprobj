@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDG ADMIN - ElecPro Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .sidebar-item:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .active-link { background-color: #eab308; color: #1e3a8a; }
+    </style>
+</head>
+<body class="bg-slate-100 flex min-h-screen">
+
+    <aside class="w-64 bg-blue-900 text-white flex-shrink-0 hidden md:flex flex-col">
+        <div class="p-6 border-b border-blue-800 flex items-center gap-3">
+            <i class="fas fa-user-shield text-yellow-400 text-2xl"></i>
+            <span class="font-black text-xl tracking-tighter">ADMIN PANEL</span>
+        </div>
+        <nav class="flex-grow p-4 space-y-2 text-sm font-semibold">
+            <a href="#" onclick="showSection('stats')" class="sidebar-item flex items-center gap-3 p-3 rounded-lg active-link">
+                <i class="fas fa-chart-line"></i> Statistiques Globales
+            </a>
+            <a href="#" onclick="showSection('formations')" class="sidebar-item flex items-center gap-3 p-3 rounded-lg">
+                <i class="fas fa-graduation-cap"></i> Gérer les Formations
+            </a>
+            <a href="#" onclick="showSection('apprenants')" class="sidebar-item flex items-center gap-3 p-3 rounded-lg">
+                <i class="fas fa-user-graduate"></i> Liste des Apprenants
+            </a>
+            <a href="#" onclick="showSection('employes')" class="sidebar-item flex items-center gap-3 p-3 rounded-lg">
+                <i class="fas fa-user-tie"></i> Formateurs & Employés
+            </a>
+            <a href="#" onclick="showSection('validations')" class="sidebar-item flex items-center gap-3 p-3 rounded-lg">
+                <i class="fas fa-check-double"></i> Validations <span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full" id="count-valid">0</span>
+            </a>
+            <a href="#" onclick="showSection('centres')" class="sidebar-item flex items-center gap-3 p-3 rounded-lg">
+                <i class="fas fa-store"></i> Gestion des Centres
+            </a>
+        </nav>
+        <div class="p-4 border-t border-blue-800">
+            <button onclick="logout()" class="w-full bg-red-500/20 hover:bg-red-500 p-2 rounded-lg text-xs transition">Déconnexion</button>
+        </div>
+    </aside>
+
+    <main class="flex-grow flex flex-col h-screen overflow-y-auto">
+        
+        <header class="bg-white shadow-sm p-4 flex justify-between items-center">
+            <h2 id="section-title" class="text-xl font-bold text-blue-900 italic">Tableau de Bord</h2>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-xs font-bold text-slate-500 uppercase">PDG Connecté</p>
+                    <p class="text-sm font-black text-blue-900">Richard Gbohounme</p>
+                </div>
+                <img src="https://ui-avatars.com/api/?name=Richard+G&background=1e3a8a&color=fff" class="w-10 h-10 rounded-full border-2 border-yellow-500">
+            </div>
+        </header>
+
+        <div class="p-8">
+            
+            <section id="section-stats" class="space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-blue-600">
+                        <p class="text-slate-500 text-xs font-bold uppercase mb-1">Revenus Totaux</p>
+                        <p class="text-2xl font-black text-blue-900" id="stat-revenus">0 FCFA</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-green-500">
+                        <p class="text-slate-500 text-xs font-bold uppercase mb-1">Apprenants Actifs</p>
+                        <p class="text-2xl font-black text-blue-900" id="stat-apprenants">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-yellow-500">
+                        <p class="text-slate-500 text-xs font-bold uppercase mb-1">Présences Chantier</p>
+                        <p class="text-2xl font-black text-blue-900">92%</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-purple-500">
+                        <p class="text-slate-500 text-xs font-bold uppercase mb-1">Certificats Délivrés</p>
+                        <p class="text-2xl font-black text-blue-900" id="stat-certs">24</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm">
+                    <h3 class="font-bold text-slate-700 mb-4">Évolution des revenus (Mensuel)</h3>
+                    <canvas id="revenueChart" height="100"></canvas>
+                </div>
+            </section>
+
+            <section id="section-formations" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-bold">Liste des Paniers (A1 - B3)</h3>
+                    <button class="bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-bold" onclick="openModal('modal-formation')">
+                        <i class="fas fa-plus mr-2"></i> Nouveau Panier
+                    </button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 border-b">
+                            <tr>
+                                <th class="p-4 uppercase font-bold text-slate-400">Code</th>
+                                <th class="p-4 uppercase font-bold text-slate-400">Titre</th>
+                                <th class="p-4 uppercase font-bold text-slate-400">Frais (H/F)</th>
+                                <th class="p-4 uppercase font-bold text-slate-400">Statut</th>
+                                <th class="p-4 uppercase font-bold text-slate-400">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-paniers">
+                            </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="section-apprenants" class="hidden space-y-6">
+                <div class="flex gap-4 mb-4">
+                    <input type="text" placeholder="Rechercher un ID ou Nom..." class="bg-white border p-2 rounded-lg w-full md:w-1/3">
+                    <select class="bg-white border p-2 rounded-lg">
+                        <option>Tous les centres</option>
+                        <option>Tanpkè Carrefour</option>
+                    </select>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm overflow-x-auto text-sm">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b">
+                            <tr>
+                                <th class="p-4">Apprenant</th>
+                                <th class="p-4">ID Unique</th>
+                                <th class="p-4">Formation</th>
+                                <th class="p-4">Reste à payer</th>
+                                <th class="p-4">Présence</th>
+                                <th class="p-4">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-apprenants"></tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <div id="modal-formation" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-8">
+            <h3 class="text-xl font-black mb-6">Ajouter une Nouvelle Formation</h3>
+            <form id="form-panier" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" placeholder="Code (ex: C1)" class="border p-3 rounded-xl w-full" id="f-code" required>
+                    <input type="text" placeholder="Titre de formation" class="border p-3 rounded-xl w-full" id="f-titre" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" placeholder="Frais Homme" class="border p-3 rounded-xl w-full" id="f-homme" required>
+                    <input type="number" placeholder="Frais Femme" class="border p-3 rounded-xl w-full" id="f-femme" required>
+                </div>
+                <textarea placeholder="Modules (séparés par des virgules)" class="border p-3 rounded-xl w-full h-32" id="f-modules"></textarea>
+                <div class="flex gap-4">
+                    <button type="button" onclick="closeModal('modal-formation')" class="flex-grow bg-slate-100 p-3 rounded-xl font-bold">Annuler</button>
+                    <button type="submit" class="flex-grow bg-blue-900 text-white p-3 rounded-xl font-bold">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://mfdxrmvvgsruobjbhvjr.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_pokT8fY2N_bVhOsqIL0AUA_OcYRP6CC';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Navigation entre sections
+        function showSection(name) {
+            document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
+            document.getElementById('section-' + name).classList.remove('hidden');
+            document.getElementById('section-title').innerText = name.charAt(0).toUpperCase() + name.slice(1);
+            
+            // Mise à jour style sidebar
+            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active-link'));
+            event.currentTarget.classList.add('active-link');
+
+            if(name === 'formations') loadPaniers();
+            if(name === 'apprenants') loadApprenants();
+        }
+
+        async function loadPaniers() {
+            const { data } = await supabase.from('paniers').select('*');
+            const tbody = document.getElementById('table-paniers');
+            tbody.innerHTML = data.map(p => `
+                <tr class="border-b hover:bg-slate-50 transition">
+                    <td class="p-4 font-bold text-blue-900">P${p.code}</td>
+                    <td class="p-4 font-medium">${p.titre}</td>
+                    <td class="p-4 text-xs font-bold text-slate-500">${p.frais_homme}/${p.frais_femme}</td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 rounded-full text-[10px] font-bold ${p.actif ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} uppercase">
+                            ${p.actif ? 'Actif' : 'Inactif'}
+                        </span>
+                    </td>
+                    <td class="p-4">
+                        <button class="text-blue-600 mr-3"><i class="fas fa-edit"></i></button>
+                        <button class="text-red-400"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadApprenants() {
+            const { data } = await supabase.from('apprenants').select('*');
+            const tbody = document.getElementById('table-apprenants');
+            tbody.innerHTML = data.map(a => `
+                <tr class="border-b hover:bg-slate-50">
+                    <td class="p-4 flex items-center gap-3">
+                        <img src="${a.photo_profil || 'https://via.placeholder.com/40'}" class="w-8 h-8 rounded-full border">
+                        <span class="font-bold">${a.nom_complet}</span>
+                    </td>
+                    <td class="p-4"><code class="bg-slate-100 px-2 py-1 rounded text-xs">ELP-${a.id.slice(0,5)}</code></td>
+                    <td class="p-4 text-xs">${a.type_formation}</td>
+                    <td class="p-4 font-bold text-red-600">${a.solde_restant.toLocaleString()} F</td>
+                    <td class="p-4">
+                        <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                            <div class="bg-green-500 h-full" style="width: ${a.taux_presence || 0}%"></div>
+                        </div>
+                    </td>
+                    <td class="p-4">
+                        <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-lg text-[10px] font-bold">PAYÉ</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Graphique de revenus
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+                datasets: [{
+                    label: 'Revenus ElecPro (FCFA)',
+                    data: [450000, 780000, 520000, 1200000, 950000, 1500000],
+                    borderColor: '#1e3a8a',
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(30, 58, 138, 0.05)'
+                }]
+            }
+        });
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // Initialisation
+        window.onload = () => {
+            // Stats de base factices
+            document.getElementById('stat-apprenants').innerText = "156";
+            document.getElementById('stat-revenus').innerText = "5.450.000";
+        };
+    </script>
+</body>
+</html>
