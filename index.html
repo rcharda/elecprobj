@@ -1,255 +1,1012 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDG ADMIN - ElecPro Management System</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ElecPro — Centre de Formation Professionnelle en Électricité</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ═══════════════════════════════════════════════
+   VARIABLES & RESET
+═══════════════════════════════════════════════ */
+:root {
+  --bg:        #08090d;
+  --bg2:       #0f1118;
+  --bg3:       #161822;
+  --border:    rgba(255,255,255,0.07);
+  --yellow:    #f0c040;
+  --orange:    #e8773a;
+  --yellow-dim:#c49a20;
+  --white:     #f5f5f0;
+  --gray:      #8a8d9a;
+  --light:     #d1d3dd;
+  --font-head: 'Bebas Neue', sans-serif;
+  --font-body: 'Sora', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius:    12px;
+  --glow:      0 0 40px rgba(240,192,64,0.15);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
 
-    <style>
-        .sidebar-item:hover { background-color: rgba(255, 255, 255, 0.1); }
-        .active-link { background-color: #eab308; color: #1e3a8a; }
-    </style>
+/* ═══════════════════════════════════════════════
+   CIRCUIT BACKGROUND
+═══════════════════════════════════════════════ */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(240,192,64,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(240,192,64,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ═══════════════════════════════════════════════
+   NAVBAR
+═══════════════════════════════════════════════ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 5%;
+  height: 72px;
+  background: rgba(8,9,13,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  transition: all .3s;
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 12px; text-decoration: none;
+}
+.nav-logo-icon {
+  width: 38px; height: 38px;
+  background: var(--yellow);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.nav-logo-text {
+  font-family: var(--font-head);
+  font-size: 26px;
+  color: var(--white);
+  letter-spacing: 1px;
+}
+.nav-logo-text span { color: var(--yellow); }
+.nav-links {
+  display: flex; align-items: center; gap: 32px;
+  list-style: none;
+}
+.nav-links a {
+  color: var(--gray);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: .5px;
+  transition: color .2s;
+}
+.nav-links a:hover { color: var(--yellow); }
+.nav-actions { display: flex; gap: 12px; align-items: center; }
+.btn-ghost {
+  padding: 9px 20px; border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent; color: var(--light);
+  font-family: var(--font-body); font-size: 13px; font-weight: 500;
+  cursor: pointer; text-decoration: none;
+  transition: all .2s;
+}
+.btn-ghost:hover { border-color: var(--yellow); color: var(--yellow); }
+.btn-primary {
+  padding: 9px 22px; border-radius: 8px;
+  border: none;
+  background: var(--yellow); color: #08090d;
+  font-family: var(--font-body); font-size: 13px; font-weight: 700;
+  cursor: pointer; text-decoration: none;
+  transition: all .2s;
+  letter-spacing: .3px;
+}
+.btn-primary:hover { background: #ffd460; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(240,192,64,0.35); }
+
+/* ═══════════════════════════════════════════════
+   HERO
+═══════════════════════════════════════════════ */
+#hero {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 100px 5% 80px;
+  overflow: hidden;
+}
+.hero-glow {
+  position: absolute;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(240,192,64,0.12) 0%, transparent 70%);
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 16px;
+  border: 1px solid rgba(240,192,64,0.3);
+  border-radius: 100px;
+  background: rgba(240,192,64,0.08);
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--yellow); letter-spacing: 1px;
+  margin-bottom: 28px;
+  animation: fadeUp .8s ease both;
+}
+.hero-badge::before {
+  content: '';
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--yellow);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.8)} }
+
+.hero-title {
+  font-family: var(--font-head);
+  font-size: clamp(52px, 9vw, 120px);
+  line-height: .95;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  animation: fadeUp .8s .1s ease both;
+}
+.hero-title .line2 { color: var(--yellow); display: block; }
+.hero-title .line3 { color: var(--gray); display: block; font-size: .55em; letter-spacing: 6px; }
+
+.hero-sub {
+  max-width: 540px;
+  color: var(--gray); font-size: 15px; line-height: 1.8;
+  margin: 20px auto 40px;
+  animation: fadeUp .8s .2s ease both;
+}
+.hero-actions {
+  display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+  animation: fadeUp .8s .3s ease both;
+}
+.btn-hero {
+  padding: 14px 32px; border-radius: 10px;
+  background: var(--yellow); color: #08090d;
+  font-family: var(--font-body); font-size: 15px; font-weight: 700;
+  border: none; cursor: pointer; text-decoration: none;
+  transition: all .25s;
+  box-shadow: 0 0 0 0 rgba(240,192,64,0.4);
+}
+.btn-hero:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(240,192,64,0.4); }
+.btn-hero-outline {
+  padding: 14px 32px; border-radius: 10px;
+  background: transparent; color: var(--white);
+  font-family: var(--font-body); font-size: 15px; font-weight: 600;
+  border: 1px solid var(--border); cursor: pointer; text-decoration: none;
+  transition: all .25s;
+}
+.btn-hero-outline:hover { border-color: var(--yellow); color: var(--yellow); }
+
+.hero-scroll {
+  position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: var(--gray); font-size: 11px; letter-spacing: 2px;
+  text-transform: uppercase; font-family: var(--font-mono);
+  animation: fadeUp .8s .5s ease both;
+}
+.scroll-line {
+  width: 1px; height: 40px;
+  background: linear-gradient(to bottom, var(--yellow), transparent);
+  animation: scrollAnim 2s ease-in-out infinite;
+}
+@keyframes scrollAnim { 0%{opacity:1;transform:scaleY(1)} 100%{opacity:0;transform:scaleY(0) translateY(-20px)} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:none} }
+
+/* Hero stats bar */
+.hero-stats {
+  display: flex; gap: 0; margin-top: 60px;
+  border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+  background: rgba(255,255,255,0.02);
+  backdrop-filter: blur(10px);
+  animation: fadeUp .8s .4s ease both;
+}
+.hero-stat {
+  padding: 22px 40px; flex: 1;
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+.hero-stat:last-child { border-right: none; }
+.hero-stat-val {
+  font-family: var(--font-head);
+  font-size: 38px; color: var(--yellow); line-height: 1;
+}
+.hero-stat-lbl {
+  font-size: 11px; color: var(--gray); letter-spacing: 1px;
+  text-transform: uppercase; margin-top: 4px;
+}
+
+/* ═══════════════════════════════════════════════
+   SECTION BASE
+═══════════════════════════════════════════════ */
+section { position: relative; z-index: 1; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 5%; }
+.section-header { text-align: center; margin-bottom: 60px; }
+.section-tag {
+  display: inline-block;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--yellow);
+  margin-bottom: 12px;
+}
+.section-title {
+  font-family: var(--font-head);
+  font-size: clamp(36px, 5vw, 60px);
+  line-height: 1;
+  letter-spacing: 1px;
+}
+.section-desc {
+  color: var(--gray); max-width: 500px; margin: 16px auto 0;
+  font-size: 14px;
+}
+
+/* ═══════════════════════════════════════════════
+   FORMATIONS SECTION
+═══════════════════════════════════════════════ */
+#formations { padding: 100px 0; }
+.formations-tabs {
+  display: flex; justify-content: center; gap: 8px;
+  margin-bottom: 48px;
+}
+.tab-btn {
+  padding: 8px 24px; border-radius: 100px;
+  border: 1px solid var(--border);
+  background: transparent; color: var(--gray);
+  font-family: var(--font-body); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all .2s;
+}
+.tab-btn.active, .tab-btn:hover {
+  background: var(--yellow); color: #08090d;
+  border-color: var(--yellow); font-weight: 700;
+}
+.formations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+.formation-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  transition: all .3s;
+  position: relative;
+  overflow: hidden;
+}
+.formation-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--yellow), var(--orange));
+  opacity: 0; transition: opacity .3s;
+}
+.formation-card:hover { border-color: rgba(240,192,64,0.3); transform: translateY(-4px); box-shadow: var(--glow); }
+.formation-card:hover::before { opacity: 1; }
+.formation-card.populaire { border-color: rgba(240,192,64,0.25); }
+.formation-card.populaire::before { opacity: 1; }
+.card-badges {
+  display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.badge {
+  padding: 3px 10px; border-radius: 100px; font-size: 10px;
+  font-weight: 600; letter-spacing: .5px; text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+.badge-serie { background: rgba(240,192,64,0.15); color: var(--yellow); border: 1px solid rgba(240,192,64,0.3); }
+.badge-pop { background: rgba(232,119,58,0.15); color: var(--orange); border: 1px solid rgba(232,119,58,0.3); }
+.badge-rec { background: rgba(80,200,120,0.15); color: #50c878; border: 1px solid rgba(80,200,120,0.3); }
+.card-code {
+  font-family: var(--font-mono); font-size: 12px; color: var(--gray);
+  margin-bottom: 6px;
+}
+.card-title {
+  font-size: 17px; font-weight: 700; color: var(--white);
+  line-height: 1.4; margin-bottom: 16px;
+}
+.card-modules {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px;
+}
+.module-tag {
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  padding: 4px 10px; border-radius: 6px; font-size: 11px; color: var(--light);
+}
+.card-meta {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--gray); margin-bottom: 20px;
+}
+.card-meta span { display: flex; align-items: center; gap: 4px; }
+.card-pricing {
+  border-top: 1px solid var(--border); padding-top: 18px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.price-item { }
+.price-lbl { font-size: 10px; color: var(--gray); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+.price-val { font-family: var(--font-head); font-size: 22px; color: var(--yellow); }
+.price-sub { font-size: 10px; color: var(--gray); }
+.card-cta {
+  margin-top: 20px;
+  display: block; width: 100%; padding: 11px;
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 8px; color: var(--light);
+  font-family: var(--font-body); font-size: 13px; font-weight: 600;
+  cursor: pointer; text-align: center; text-decoration: none;
+  transition: all .2s;
+}
+.card-cta:hover { background: var(--yellow); color: #08090d; border-color: var(--yellow); }
+.diplomes-list { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.diplome-tag { font-size: 10px; background: rgba(255,255,255,.04); border: 1px solid var(--border); padding: 3px 8px; border-radius: 4px; color: var(--gray); }
+
+/* ═══════════════════════════════════════════════
+   CENTRES SECTION
+═══════════════════════════════════════════════ */
+#centres { padding: 100px 0; background: var(--bg2); }
+.centres-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;
+}
+.centre-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px;
+  position: relative; overflow: hidden;
+  transition: all .3s;
+}
+.centre-card:hover { border-color: rgba(240,192,64,.25); transform: translateY(-3px); }
+.centre-num {
+  position: absolute; top: 20px; right: 24px;
+  font-family: var(--font-head); font-size: 60px; color: rgba(240,192,64,.05);
+  line-height: 1; pointer-events: none;
+}
+.centre-icon {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: rgba(240,192,64,.12); border: 1px solid rgba(240,192,64,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin-bottom: 16px;
+}
+.centre-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.centre-info { display: flex; flex-direction: column; gap: 6px; }
+.centre-info-line {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--gray);
+}
+.centre-info-line svg { flex-shrink: 0; }
+.centre-status {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 16px; font-size: 11px; color: #50c878;
+  font-family: var(--font-mono);
+}
+.centre-status::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: #50c878; display: inline-block;
+}
+
+/* ═══════════════════════════════════════════════
+   FEATURES
+═══════════════════════════════════════════════ */
+#fonctionnalites { padding: 100px 0; }
+.features-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;
+}
+.feature-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 14px; padding: 24px;
+  transition: all .25s;
+}
+.feature-card:hover { border-color: rgba(240,192,64,.2); }
+.feature-icon {
+  width: 42px; height: 42px; border-radius: 10px;
+  background: rgba(240,192,64,.1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; margin-bottom: 14px;
+}
+.feature-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.feature-desc { font-size: 13px; color: var(--gray); line-height: 1.6; }
+
+/* ═══════════════════════════════════════════════
+   ROLES SECTION
+═══════════════════════════════════════════════ */
+#roles { padding: 100px 0; background: var(--bg2); }
+.roles-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px;
+}
+.role-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 14px; padding: 22px;
+  text-align: center; transition: all .25s;
+  cursor: default;
+}
+.role-card:hover { border-color: rgba(240,192,64,.25); }
+.role-emoji { font-size: 32px; margin-bottom: 10px; }
+.role-name { font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+.role-desc { font-size: 12px; color: var(--gray); }
+
+/* ═══════════════════════════════════════════════
+   CTA
+═══════════════════════════════════════════════ */
+#cta {
+  padding: 120px 5%; text-align: center;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+}
+.cta-inner {
+  max-width: 680px; margin: 0 auto;
+  background: var(--bg3); border: 1px solid rgba(240,192,64,.15);
+  border-radius: 24px; padding: 60px 40px;
+  position: relative; overflow: hidden;
+  box-shadow: var(--glow);
+}
+.cta-glow {
+  position: absolute; width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(240,192,64,.15) 0%, transparent 70%);
+  top: -100px; right: -80px; pointer-events: none;
+}
+.cta-icon { font-size: 44px; margin-bottom: 16px; }
+.cta-title {
+  font-family: var(--font-head); font-size: clamp(32px, 5vw, 52px);
+  margin-bottom: 14px; line-height: 1;
+}
+.cta-desc { color: var(--gray); margin-bottom: 32px; font-size: 15px; }
+.cta-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ═══════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════ */
+footer {
+  background: var(--bg); border-top: 1px solid var(--border);
+  padding: 60px 5% 30px; position: relative; z-index: 1;
+}
+.footer-grid {
+  display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px;
+  margin-bottom: 48px;
+}
+.footer-brand p { color: var(--gray); font-size: 13px; margin-top: 12px; max-width: 240px; line-height: 1.7; }
+.footer-col h4 { font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 16px; color: var(--light); }
+.footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.footer-col ul a { color: var(--gray); text-decoration: none; font-size: 13px; transition: color .2s; }
+.footer-col ul a:hover { color: var(--yellow); }
+.footer-bottom {
+  border-top: 1px solid var(--border); padding-top: 24px;
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 12px;
+}
+.footer-bottom p { font-size: 12px; color: var(--gray); }
+.footer-rccm { font-family: var(--font-mono); font-size: 11px; color: rgba(240,192,64,.5); }
+
+/* ═══════════════════════════════════════════════
+   LOADER
+═══════════════════════════════════════════════ */
+.loading-dot {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--yellow); animation: blink 1.2s infinite;
+  margin: 0 2px;
+}
+.loading-dot:nth-child(2) { animation-delay: .2s; }
+.loading-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%,100%{opacity:.2} 50%{opacity:1} }
+.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg2) 50%, var(--bg3) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ═══════════════════════════════════════════════
+   MOBILE NAV
+═══════════════════════════════════════════════ */
+.hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 4px; }
+.hamburger span { width: 22px; height: 2px; background: var(--white); border-radius: 2px; transition: all .3s; }
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .hamburger { display: flex; }
+  .hero-stats { flex-direction: column; }
+  .hero-stat { border-right: none; border-bottom: 1px solid var(--border); }
+  .hero-stat:last-child { border-bottom: none; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .btn-hero, .btn-hero-outline { width: 100%; text-align: center; }
+  .hero-actions { flex-direction: column; padding: 0 20px; }
+}
+@media (max-width: 480px) {
+  .footer-grid { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════
+   SCROLL ANIMATIONS
+═══════════════════════════════════════════════ */
+.reveal {
+  opacity: 0; transform: translateY(30px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+.reveal.visible { opacity: 1; transform: none; }
+</style>
 </head>
-<body class="bg-slate-100 flex min-h-screen">
+<body>
 
-    <aside class="w-64 bg-blue-900 text-white flex-shrink-0 hidden md:flex flex-col">
-        <div class="p-6 border-b border-blue-800 flex items-center gap-3">
-            <i class="fas fa-user-shield text-yellow-400 text-2xl"></i>
-            <span class="font-black text-xl tracking-tighter">ADMIN PANEL</span>
-        </div>
-        <nav class="flex-grow p-4 space-y-2 text-sm font-semibold">
-            <a href="#" onclick="showSection('stats')" class="sidebar-item flex items-center gap-3 p-3 rounded-lg active-link">
-                <i class="fas fa-chart-line"></i> Statistiques Globales
-            </a>
-            <a href="#" onclick="showSection('formations')" class="sidebar-item flex items-center gap-3 p-3 rounded-lg">
-                <i class="fas fa-graduation-cap"></i> Gérer les Formations
-            </a>
-            <a href="#" onclick="showSection('apprenants')" class="sidebar-item flex items-center gap-3 p-3 rounded-lg">
-                <i class="fas fa-user-graduate"></i> Liste des Apprenants
-            </a>
-            <a href="#" onclick="showSection('employes')" class="sidebar-item flex items-center gap-3 p-3 rounded-lg">
-                <i class="fas fa-user-tie"></i> Formateurs & Employés
-            </a>
-            <a href="#" onclick="showSection('validations')" class="sidebar-item flex items-center gap-3 p-3 rounded-lg">
-                <i class="fas fa-check-double"></i> Validations <span class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full" id="count-valid">0</span>
-            </a>
-            <a href="#" onclick="showSection('centres')" class="sidebar-item flex items-center gap-3 p-3 rounded-lg">
-                <i class="fas fa-store"></i> Gestion des Centres
-            </a>
-        </nav>
-        <div class="p-4 border-t border-blue-800">
-            <button onclick="logout()" class="w-full bg-red-500/20 hover:bg-red-500 p-2 rounded-lg text-xs transition">Déconnexion</button>
-        </div>
-    </aside>
+<!-- ═══════ NAVBAR ═══════ -->
+<nav id="navbar">
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">⚡</div>
+    <span class="nav-logo-text">Elec<span>Pro</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#formations">Formations</a></li>
+    <li><a href="#centres">Centres</a></li>
+    <li><a href="#fonctionnalites">Plateforme</a></li>
+    <li><a href="#roles">Accès</a></li>
+    <li><a href="#cta">Contact</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="login.html" class="btn-ghost">Se connecter</a>
+    <a href="register.html" class="btn-primary">S'inscrire</a>
+  </div>
+  <div class="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
 
-    <main class="flex-grow flex flex-col h-screen overflow-y-auto">
-        
-        <header class="bg-white shadow-sm p-4 flex justify-between items-center">
-            <h2 id="section-title" class="text-xl font-bold text-blue-900 italic">Tableau de Bord</h2>
-            <div class="flex items-center gap-4">
-                <div class="text-right">
-                    <p class="text-xs font-bold text-slate-500 uppercase">PDG Connecté</p>
-                    <p class="text-sm font-black text-blue-900">Richard Gbohounme</p>
-                </div>
-                <img src="https://ui-avatars.com/api/?name=Richard+G&background=1e3a8a&color=fff" class="w-10 h-10 rounded-full border-2 border-yellow-500">
-            </div>
-        </header>
+<!-- ═══════ HERO ═══════ -->
+<section id="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">
+    <span></span> RCCM : RB/COT/23 A 87639 &nbsp;·&nbsp; BÉNIN
+  </div>
+  <h1 class="hero-title">
+    FORMEZ-VOUS
+    <span class="line2">EN ÉLECTRICITÉ</span>
+    <span class="line3">PROFESSIONNEL · CERTIFIÉ · INNOVANT</span>
+  </h1>
+  <p class="hero-sub">
+    ElecPro forme les électriciens de demain. Électricité bâtiment, industrielle,
+    photovoltaïque, automatisme et vidéosurveillance — diplômes d'État inclus.
+  </p>
+  <div class="hero-actions">
+    <a href="register.html" class="btn-hero">🎓 Démarrer ma formation</a>
+    <a href="#formations" class="btn-hero-outline">Voir les formations →</a>
+  </div>
 
-        <div class="p-8">
-            
-            <section id="section-stats" class="space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-blue-600">
-                        <p class="text-slate-500 text-xs font-bold uppercase mb-1">Revenus Totaux</p>
-                        <p class="text-2xl font-black text-blue-900" id="stat-revenus">0 FCFA</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-green-500">
-                        <p class="text-slate-500 text-xs font-bold uppercase mb-1">Apprenants Actifs</p>
-                        <p class="text-2xl font-black text-blue-900" id="stat-apprenants">0</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-yellow-500">
-                        <p class="text-slate-500 text-xs font-bold uppercase mb-1">Présences Chantier</p>
-                        <p class="text-2xl font-black text-blue-900">92%</p>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-purple-500">
-                        <p class="text-slate-500 text-xs font-bold uppercase mb-1">Certificats Délivrés</p>
-                        <p class="text-2xl font-black text-blue-900" id="stat-certs">24</p>
-                    </div>
-                </div>
-
-                <div class="bg-white p-6 rounded-2xl shadow-sm">
-                    <h3 class="font-bold text-slate-700 mb-4">Évolution des revenus (Mensuel)</h3>
-                    <canvas id="revenueChart" height="100"></canvas>
-                </div>
-            </section>
-
-            <section id="section-formations" class="hidden space-y-6">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-lg font-bold">Liste des Paniers (A1 - B3)</h3>
-                    <button class="bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-bold" onclick="openModal('modal-formation')">
-                        <i class="fas fa-plus mr-2"></i> Nouveau Panier
-                    </button>
-                </div>
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-50 border-b">
-                            <tr>
-                                <th class="p-4 uppercase font-bold text-slate-400">Code</th>
-                                <th class="p-4 uppercase font-bold text-slate-400">Titre</th>
-                                <th class="p-4 uppercase font-bold text-slate-400">Frais (H/F)</th>
-                                <th class="p-4 uppercase font-bold text-slate-400">Statut</th>
-                                <th class="p-4 uppercase font-bold text-slate-400">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-paniers">
-                            </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <section id="section-apprenants" class="hidden space-y-6">
-                <div class="flex gap-4 mb-4">
-                    <input type="text" placeholder="Rechercher un ID ou Nom..." class="bg-white border p-2 rounded-lg w-full md:w-1/3">
-                    <select class="bg-white border p-2 rounded-lg">
-                        <option>Tous les centres</option>
-                        <option>Tanpkè Carrefour</option>
-                    </select>
-                </div>
-                <div class="bg-white rounded-xl shadow-sm overflow-x-auto text-sm">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 border-b">
-                            <tr>
-                                <th class="p-4">Apprenant</th>
-                                <th class="p-4">ID Unique</th>
-                                <th class="p-4">Formation</th>
-                                <th class="p-4">Reste à payer</th>
-                                <th class="p-4">Présence</th>
-                                <th class="p-4">Statut</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-apprenants"></tbody>
-                    </table>
-                </div>
-            </section>
-
-        </div>
-    </main>
-
-    <div id="modal-formation" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-4 z-[100]">
-        <div class="bg-white w-full max-w-lg rounded-3xl p-8">
-            <h3 class="text-xl font-black mb-6">Ajouter une Nouvelle Formation</h3>
-            <form id="form-panier" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="text" placeholder="Code (ex: C1)" class="border p-3 rounded-xl w-full" id="f-code" required>
-                    <input type="text" placeholder="Titre de formation" class="border p-3 rounded-xl w-full" id="f-titre" required>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="number" placeholder="Frais Homme" class="border p-3 rounded-xl w-full" id="f-homme" required>
-                    <input type="number" placeholder="Frais Femme" class="border p-3 rounded-xl w-full" id="f-femme" required>
-                </div>
-                <textarea placeholder="Modules (séparés par des virgules)" class="border p-3 rounded-xl w-full h-32" id="f-modules"></textarea>
-                <div class="flex gap-4">
-                    <button type="button" onclick="closeModal('modal-formation')" class="flex-grow bg-slate-100 p-3 rounded-xl font-bold">Annuler</button>
-                    <button type="submit" class="flex-grow bg-blue-900 text-white p-3 rounded-xl font-bold">Enregistrer</button>
-                </div>
-            </form>
-        </div>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-val" id="stat-apprenants">
+        <span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
+      </div>
+      <div class="hero-stat-lbl">Apprenants actifs</div>
     </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val" id="stat-formations">
+        <span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
+      </div>
+      <div class="hero-stat-lbl">Filières disponibles</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val" id="stat-centres">
+        <span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
+      </div>
+      <div class="hero-stat-lbl">Centres de formation</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-val" id="stat-diplomes">3</div>
+      <div class="hero-stat-lbl">Types de diplômes</div>
+    </div>
+  </div>
 
-    <script>
-        const SUPABASE_URL = 'https://mfdxrmvvgsruobjbhvjr.supabase.co'; 
-        const SUPABASE_KEY = 'sb_publishable_pokT8fY2N_bVhOsqIL0AUA_OcYRP6CC';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    Découvrir
+  </div>
+</section>
 
-        // Navigation entre sections
-        function showSection(name) {
-            document.querySelectorAll('main section').forEach(s => s.classList.add('hidden'));
-            document.getElementById('section-' + name).classList.remove('hidden');
-            document.getElementById('section-title').innerText = name.charAt(0).toUpperCase() + name.slice(1);
-            
-            // Mise à jour style sidebar
-            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active-link'));
-            event.currentTarget.classList.add('active-link');
+<!-- ═══════ FORMATIONS ═══════ -->
+<section id="formations">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-tag">// Nos programmes</div>
+      <h2 class="section-title">CHOISISSEZ VOTRE<br/>FORMATION</h2>
+      <p class="section-desc">Des paniers flexibles adaptés à votre budget et vos ambitions professionnelles.</p>
+    </div>
+    <div class="formations-tabs">
+      <button class="tab-btn active" onclick="filterFormations('all')">Toutes</button>
+      <button class="tab-btn" onclick="filterFormations('A')">Série A</button>
+      <button class="tab-btn" onclick="filterFormations('B')">Série B</button>
+    </div>
+    <div class="formations-grid" id="formations-grid">
+      <!-- Chargé dynamiquement depuis Supabase -->
+      <div class="formation-card">
+        <div class="skeleton" style="height:20px;width:60%;margin-bottom:12px"></div>
+        <div class="skeleton" style="height:28px;margin-bottom:16px"></div>
+        <div class="skeleton" style="height:16px;margin-bottom:8px"></div>
+        <div class="skeleton" style="height:16px;width:80%;margin-bottom:20px"></div>
+        <div class="skeleton" style="height:60px"></div>
+      </div>
+      <div class="formation-card">
+        <div class="skeleton" style="height:20px;width:60%;margin-bottom:12px"></div>
+        <div class="skeleton" style="height:28px;margin-bottom:16px"></div>
+        <div class="skeleton" style="height:16px;margin-bottom:8px"></div>
+        <div class="skeleton" style="height:16px;width:80%;margin-bottom:20px"></div>
+        <div class="skeleton" style="height:60px"></div>
+      </div>
+      <div class="formation-card">
+        <div class="skeleton" style="height:20px;width:60%;margin-bottom:12px"></div>
+        <div class="skeleton" style="height:28px;margin-bottom:16px"></div>
+        <div class="skeleton" style="height:16px;margin-bottom:8px"></div>
+        <div class="skeleton" style="height:16px;width:80%;margin-bottom:20px"></div>
+        <div class="skeleton" style="height:60px"></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-            if(name === 'formations') loadPaniers();
-            if(name === 'apprenants') loadApprenants();
-        }
+<!-- ═══════ CENTRES ═══════ -->
+<section id="centres">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-tag">// Nos localisations</div>
+      <h2 class="section-title">NOS CENTRES<br/>DE FORMATION</h2>
+      <p class="section-desc">Retrouvez-nous dans plusieurs villes du Bénin.</p>
+    </div>
+    <div class="centres-grid" id="centres-grid">
+      <div class="centre-card">
+        <div class="skeleton" style="height:48px;width:48px;border-radius:12px;margin-bottom:16px"></div>
+        <div class="skeleton" style="height:22px;width:70%;margin-bottom:12px"></div>
+        <div class="skeleton" style="height:14px;margin-bottom:8px"></div>
+        <div class="skeleton" style="height:14px;width:60%"></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-        async function loadPaniers() {
-            const { data } = await supabase.from('paniers').select('*');
-            const tbody = document.getElementById('table-paniers');
-            tbody.innerHTML = data.map(p => `
-                <tr class="border-b hover:bg-slate-50 transition">
-                    <td class="p-4 font-bold text-blue-900">P${p.code}</td>
-                    <td class="p-4 font-medium">${p.titre}</td>
-                    <td class="p-4 text-xs font-bold text-slate-500">${p.frais_homme}/${p.frais_femme}</td>
-                    <td class="p-4">
-                        <span class="px-2 py-1 rounded-full text-[10px] font-bold ${p.actif ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} uppercase">
-                            ${p.actif ? 'Actif' : 'Inactif'}
-                        </span>
-                    </td>
-                    <td class="p-4">
-                        <button class="text-blue-600 mr-3"><i class="fas fa-edit"></i></button>
-                        <button class="text-red-400"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-            `).join('');
-        }
+<!-- ═══════ FONCTIONNALITÉS ═══════ -->
+<section id="fonctionnalites">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-tag">// Plateforme</div>
+      <h2 class="section-title">UN LOGICIEL COMPLET<br/>POUR VOTRE CENTRE</h2>
+      <p class="section-desc">Tout en un : gestion des inscriptions, paiements FedaPay, présences et attestations.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon">🪪</div>
+        <div class="feature-title">ID Unique + QR Code</div>
+        <div class="feature-desc">Chaque apprenant reçoit un identifiant unique EP-2025-XXXX et un QR Code pour vérifier l'authenticité de tout document.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">💳</div>
+        <div class="feature-title">Paiement FedaPay par tranches</div>
+        <div class="feature-desc">Les apprenants paient leurs frais en 6 tranches. Chaque paiement génère automatiquement un reçu PDF envoyé par mail.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Suivi des présences</div>
+        <div class="feature-desc">Les formateurs marquent les présences par classe. En cas d'absences répétées, l'ID de l'apprenant est automatiquement bloqué.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">📜</div>
+        <div class="feature-title">Attestations automatiques</div>
+        <div class="feature-desc">Une fois la formation terminée et validée par le PDG, le système génère l'attestation officielle avec QR Code d'authenticité.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">💬</div>
+        <div class="feature-title">Messagerie interne</div>
+        <div class="feature-desc">Communication directe entre PDG, formateurs et apprenants. Notifications en temps réel pour tout événement important.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">💰</div>
+        <div class="feature-title">Salaires formateurs</div>
+        <div class="feature-desc">Les formateurs demandent leur virement via FedaPay. Le PDG valide, une facture PDF est générée automatiquement.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">📋</div>
+        <div class="feature-title">Programmes en ligne</div>
+        <div class="feature-desc">Les programmes de cours en PDF sont consultables en ligne depuis la plateforme, non téléchargeables.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon">📈</div>
+        <div class="feature-title">Tableau de bord financier</div>
+        <div class="feature-desc">Revenus mensuels, historique des paiements, soldes restants — tout centralisé pour le PDG avec graphiques.</div>
+      </div>
+    </div>
+  </div>
+</section>
 
-        async function loadApprenants() {
-            const { data } = await supabase.from('apprenants').select('*');
-            const tbody = document.getElementById('table-apprenants');
-            tbody.innerHTML = data.map(a => `
-                <tr class="border-b hover:bg-slate-50">
-                    <td class="p-4 flex items-center gap-3">
-                        <img src="${a.photo_profil || 'https://via.placeholder.com/40'}" class="w-8 h-8 rounded-full border">
-                        <span class="font-bold">${a.nom_complet}</span>
-                    </td>
-                    <td class="p-4"><code class="bg-slate-100 px-2 py-1 rounded text-xs">ELP-${a.id.slice(0,5)}</code></td>
-                    <td class="p-4 text-xs">${a.type_formation}</td>
-                    <td class="p-4 font-bold text-red-600">${a.solde_restant.toLocaleString()} F</td>
-                    <td class="p-4">
-                        <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                            <div class="bg-green-500 h-full" style="width: ${a.taux_presence || 0}%"></div>
-                        </div>
-                    </td>
-                    <td class="p-4">
-                        <span class="bg-green-100 text-green-700 px-2 py-0.5 rounded-lg text-[10px] font-bold">PAYÉ</span>
-                    </td>
-                </tr>
-            `).join('');
-        }
+<!-- ═══════ ROLES ═══════ -->
+<section id="roles">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-tag">// Accès multi-rôles</div>
+      <h2 class="section-title">UN ESPACE DÉDIÉ<br/>POUR CHACUN</h2>
+      <p class="section-desc">Chaque acteur dispose d'un espace sécurisé adapté à ses besoins.</p>
+    </div>
+    <div class="roles-grid">
+      <div class="role-card reveal">
+        <div class="role-emoji">👑</div>
+        <div class="role-name">PDG Admin</div>
+        <div class="role-desc">Contrôle total sur la plateforme, les centres, les formations et les finances</div>
+      </div>
+      <div class="role-card reveal">
+        <div class="role-emoji">👨‍🏫</div>
+        <div class="role-name">Formateur</div>
+        <div class="role-desc">Inscription apprenants, suivi présences, gestion cours et demande de salaire</div>
+      </div>
+      <div class="role-card reveal">
+        <div class="role-emoji">🎓</div>
+        <div class="role-name">Apprenant</div>
+        <div class="role-desc">Suivi formation, paiement tranches, consultation programmes et documents</div>
+      </div>
+      <div class="role-card reveal">
+        <div class="role-emoji">💼</div>
+        <div class="role-name">Vendeur</div>
+        <div class="role-desc">Accès commercial, devis chantier avec QR Code et suivi clientèle</div>
+      </div>
+      <div class="role-card reveal">
+        <div class="role-emoji">🔐</div>
+        <div class="role-name">Gardien</div>
+        <div class="role-desc">Contrôle des accès au centre et vérification des IDs apprenants</div>
+      </div>
+      <div class="role-card reveal">
+        <div class="role-emoji">📊</div>
+        <div class="role-name">Comptable</div>
+        <div class="role-desc">Accès aux rapports financiers, paiements et exports comptables</div>
+      </div>
+    </div>
+  </div>
+</section>
 
-        // Graphique de revenus
-        const ctx = document.getElementById('revenueChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
-                datasets: [{
-                    label: 'Revenus ElecPro (FCFA)',
-                    data: [450000, 780000, 520000, 1200000, 950000, 1500000],
-                    borderColor: '#1e3a8a',
-                    tension: 0.4,
-                    fill: true,
-                    backgroundColor: 'rgba(30, 58, 138, 0.05)'
-                }]
-            }
-        });
+<!-- ═══════ CTA ═══════ -->
+<section id="cta">
+  <div class="cta-inner">
+    <div class="cta-glow"></div>
+    <div class="cta-icon">⚡</div>
+    <h2 class="cta-title">PRÊT À REJOINDRE<br/>ELECPRO ?</h2>
+    <p class="cta-desc">Inscription en ligne, paiement sécurisé FedaPay, suivi en temps réel de votre formation.</p>
+    <div class="cta-actions">
+      <a href="register.html" class="btn-primary" style="padding:14px 32px;font-size:15px;">🎓 S'inscrire maintenant</a>
+      <a href="login.html" class="btn-ghost" style="padding:14px 28px;font-size:15px;">Se connecter →</a>
+    </div>
+  </div>
+</section>
 
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+<!-- ═══════ FOOTER ═══════ -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo" style="margin-bottom:8px">
+        <div class="nav-logo-icon">⚡</div>
+        <span class="nav-logo-text">Elec<span>Pro</span></span>
+      </div>
+      <p>Centre de formation professionnelle en électricité au Bénin. Formez-vous avec des experts certifiés.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Formations</h4>
+      <ul>
+        <li><a href="#formations">Série A – Bâtiment</a></li>
+        <li><a href="#formations">Série B – Industriel</a></li>
+        <li><a href="#formations">Photovoltaïque</a></li>
+        <li><a href="#formations">Vidéosurveillance</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Plateforme</h4>
+      <ul>
+        <li><a href="login.html">Se connecter</a></li>
+        <li><a href="register.html">S'inscrire</a></li>
+        <li><a href="verify.html">Vérifier un document</a></li>
+        <li><a href="admin.html">Espace Admin</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="#">Tanpè Carrefour, Calavi</a></li>
+        <li><a href="#">UAC Calavi</a></li>
+        <li><a href="#">Cotonou Centre</a></li>
+        <li><a href="#">📞 Nous appeler</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 ElecPro — Electro Rich Entreprise. Tous droits réservés.</p>
+    <span class="footer-rccm">RCCM : RB/COT/23 A 87639</span>
+  </div>
+</footer>
 
-        // Initialisation
-        window.onload = () => {
-            // Stats de base factices
-            document.getElementById('stat-apprenants').innerText = "156";
-            document.getElementById('stat-revenus').innerText = "5.450.000";
-        };
-    </script>
+<!-- ═══════ JAVASCRIPT ═══════ -->
+<script>
+// ── CONFIGURATION SUPABASE ──────────────────────
+const SUPABASE_URL = 'VOTRE_SUPABASE_URL';          // ← Remplacez ici
+const SUPABASE_KEY = 'VOTRE_SUPABASE_ANON_KEY';     // ← Remplacez ici
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── DONNÉES GLOBALES ────────────────────────────
+let allFormations = [];
+let currentFilter = 'all';
+
+// ── INIT ────────────────────────────────────────
+async function init() {
+  await Promise.all([
+    loadStats(),
+    loadFormations(),
+    loadCentres()
+  ]);
+  setupScrollReveal();
+}
+
+// ── STATS HERO ──────────────────────────────────
+async function loadStats() {
+  try {
+    const [{ count: apprenants }, { data: formations }, { count: centres }] = await Promise.all([
+      sb.from('inscriptions').select('id', { count: 'exact', head: true }).eq('statut', 'active'),
+      sb.from('paniers').select('id').eq('actif', true),
+      sb.from('centres').select('id', { count: 'exact', head: true }).eq('actif', true)
+    ]);
+    animateNumber('stat-apprenants', apprenants || 0);
+    animateNumber('stat-formations', formations?.length || 0);
+    animateNumber('stat-centres', centres || 0);
+  } catch(e) {
+    document.getElementById('stat-apprenants').textContent = '—';
+    document.getElementById('stat-formations').textContent = '—';
+    document.getElementById('stat-centres').textContent = '—';
+  }
+}
+
+function animateNumber(id, target) {
+  const el = document.getElementById(id);
+  let current = 0;
+  const step = Math.max(1, Math.floor(target / 40));
+  const timer = setInterval(() => {
+    current = Math.min(current + step, target);
+    el.textContent = current;
+    if (current >= target) clearInterval(timer);
+  }, 40);
+}
+
+// ── FORMATIONS ──────────────────────────────────
+async function loadFormations() {
+  try {
+    const { data, error } = await sb.from('paniers').select('*').eq('actif', true).order('code');
+    if (error) throw error;
+    allFormations = data || [];
+    renderFormations(allFormations);
+  } catch(e) {
+    document.getElementById('formations-grid').innerHTML =
+      '<p style="color:var(--gray);grid-column:1/-1;text-align:center;padding:40px">Erreur de chargement. Vérifiez votre connexion Supabase.</p>';
+  }
+}
+
+function renderFormations(data) {
+  const grid = document.getElementById('formations-grid');
+  if (!data.length) {
+    grid.innerHTML = '<p style="color:var(--gray);grid-column:1/-1;text-align:center;padding:40px">Aucune formation disponible.</p>';
+    return;
+  }
+  grid.innerHTML = data.map(f => `
+    <div class="formation-card ${f.populaire?'populaire':''}" data-serie="${f.serie}">
+      <div class="card-badges">
+        <span class="badge badge-serie">Série ${f.serie}</span>
+        ${f.populaire ? '<span class="badge badge-pop">⭐ Populaire</span>' : ''}
+        ${f.recommande ? '<span class="badge badge-rec">✓ Recommandé</span>' : ''}
+      </div>
+      <div class="card-code">${f.code}</div>
+      <div class="card-title">${f.titre}</div>
+      <div class="card-modules">
+        ${(f.modules||[]).map(m=>`<span class="module-tag">${m}</span>`).join('')}
+      </div>
+      <div class="card-meta">
+        <span>🕐 ${f.duree_min_mois}${f.duree_max_mois && f.duree_max_mois !== f.duree_min_mois ? '–'+f.duree_max_mois : ''} mois</span>
+        <span>·</span>
+        <span>📑 ${f.nb_tranches} tranches</span>
+      </div>
+      <div class="diplomes-list">
+        ${(f.diplomes||[]).map(d=>`<span class="diplome-tag">${d}</span>`).join('')}
+      </div>
+      <div class="card-pricing">
+        <div class="price-item">
+          <div class="price-lbl">Homme</div>
+          <div class="price-val">${fmt(f.frais_homme)}</div>
+          <div class="price-sub">FCFA</div>
+        </div>
+        <div class="price-item">
+          <div class="price-lbl">Femme</div>
+          <div class="price-val">${fmt(f.frais_femme)}</div>
+          <div class="price-sub">FCFA</div>
+        </div>
+      </div>
+      <a href="register.html?panier=${f.id}" class="card-cta">S'inscrire à cette formation →</a>
+    </div>
+  `).join('');
+}
+
+function filterFormations(serie) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  currentFilter = serie;
+  const filtered = serie === 'all' ? allFormations : allFormations.filter(f => f.serie === serie);
+  renderFormations(filtered);
+}
+
+function fmt(n) {
+  return new Intl.NumberFormat('fr-FR').format(n);
+}
+
+// ── CENTRES ──────────────────────────────────────
+async function loadCentres() {
+  try {
+    const { data, error } = await sb.from('centres').select('*').eq('actif', true).order('nom');
+    if (error) throw error;
+    const grid = document.getElementById('centres-grid');
+    const icons = ['🏢', '🏫', '🏗️'];
+    grid.innerHTML = (data || []).map((c, i) => `
+      <div class="centre-card">
+        <div class="centre-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="centre-icon">${icons[i % icons.length]}</div>
+        <div class="centre-name">${c.nom}</div>
+        <div class="centre-info">
+          <div class="centre-info-line">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            ${c.adresse}, ${c.ville}
+          </div>
+          ${c.telephone ? `<div class="centre-info-line">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.5 2 2 0 0 1 3.6 1.32h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.5 16.92z"/></svg>
+            ${c.telephone}
+          </div>` : ''}
+          ${c.responsable ? `<div class="centre-info-line">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            ${c.responsable}
+          </div>` : ''}
+        </div>
+        <div class="centre-status">Actif</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    document.getElementById('centres-grid').innerHTML =
+      '<p style="color:var(--gray)">Erreur de chargement des centres.</p>';
+  }
+}
+
+// ── SCROLL REVEAL ───────────────────────────────
+function setupScrollReveal() {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+}
+
+// ── NAV SCROLL ──────────────────────────────────
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('navbar');
+  nav.style.background = window.scrollY > 50
+    ? 'rgba(8,9,13,0.98)'
+    : 'rgba(8,9,13,0.85)';
+});
+
+// ── HAMBURGER ──────────────────────────────────
+function toggleMenu() {
+  // Simple mobile menu – à étendre
+  const links = document.querySelector('.nav-links');
+  if (links.style.display === 'flex') {
+    links.style.display = 'none';
+  } else {
+    links.style.cssText = 'display:flex;flex-direction:column;position:absolute;top:72px;left:0;right:0;background:var(--bg);padding:20px 5%;border-bottom:1px solid var(--border);gap:16px;z-index:99;';
+  }
+}
+
+// ── START ───────────────────────────────────────
+document.addEventListener('DOMContentLoaded', init);
+</script>
 </body>
 </html>
