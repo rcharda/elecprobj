@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion | ElecPro</title>
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/components.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js" defer></script>
+  <script src="js/auth.js" defer></script>
+</head>
+<body class="login-page">
+  <main class="login-card">
+    <div class="logo-row">
+      <img src="elecpro.png" alt="Logo ElecPro">
+      <h1>ELECPRO</h1>
+    </div>
+    <p class="subtitle">Bienvenue sur votre espace de gestion</p>
+
+    <form onsubmit="handleLogin(event)">
+      <div class="field">
+        <input id="email" type="email" placeholder="Votre adresse email" required>
+      </div>
+
+      <div class="field password-wrap">
+        <input id="password" type="password" placeholder="Votre mot de passe" required>
+        <button class="password-toggle" type="button" onclick="togglePassword()">👁</button>
+      </div>
+
+      <button class="btn btn-primary" type="submit">
+        <span id="submit-text">SE CONNECTER</span>
+        <span id="submit-spinner" class="spinner hidden"></span>
+      </button>
+
+      <div id="error-banner" class="error-banner hidden">Erreur de connexion</div>
+    </form>
+
+    <p class="subtitle">Accès réservé aux membres autorisés d'ElecPro</p>
+  </main>
+</body>
+</html>
