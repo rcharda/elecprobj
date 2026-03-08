@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin | ElecPro</title>
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/sidebar.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+  <div class="page-layout">
+    <aside class="sidebar">
+      <div class="brand">ELECPRO</div>
+      <a class="active" href="#">Tableau de bord</a><a href="#">Inscription</a><a href="#">Cours</a><a href="#">Apprenants</a><a href="#">FedaPay</a>
+    </aside>
+    <main class="main-content">
+      <div class="topbar"><h1>Tableau de bord</h1><button class="btn">Déconnexion</button></div>
+      <section class="stat-grid">
+        <article class="card"><div>Apprenants actifs</div><div class="stat-value">0</div></article>
+        <article class="card"><div>Revenus du mois</div><div class="stat-value">0 FCFA</div></article>
+        <article class="card"><div>Dépenses du mois</div><div class="stat-value">0 FCFA</div></article>
+        <article class="card"><div>Solde FedaPay</div><div class="stat-value">0 FCFA</div></article>
+      </section>
+      <section class="card" style="margin-top:14px;">
+        <h2>10 dernières transactions</h2>
+        <table class="table"><thead><tr><th>Date</th><th>Nom</th><th>Type</th><th>Montant</th><th>Statut</th></tr></thead><tbody></tbody></table>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
